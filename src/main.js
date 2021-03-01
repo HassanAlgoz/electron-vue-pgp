@@ -14,6 +14,6 @@ for (const [filterName, funcBody] of Object.entries(filters)) {
 new Vue({
   render: h => h(App),
   router,
-  store,
+  store
 }).$mount('#app')
 

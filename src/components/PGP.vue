@@ -98,16 +98,15 @@
 </template>
 
 <script>
-import * as openpgp from "openpgp";
-
-openpgp.config.encryptionCipher = "curve25519";
-openpgp.config.compression = openpgp.enums.compression.zip;
+import pgp from "../pgp";
 
 export default {
   name: "PGP",
   components: {},
   data() {
     return {
+      username: "hgoz",
+      email: "hgoz@example.com",
       publicKey: "",
       privateKey: "",
       sessionKey: "",
@@ -142,60 +141,37 @@ export default {
       selectedUsers: [],
     };
   },
-  created() {
-    this.selectedUsers.push(this.userIds[0]);
-  },
+  created() {},
   computed: {},
   async mounted() {},
   methods: {
     async generateKeyPair() {
-      const userIds = this.selectedUsers.map((u) => ({
-        name: u.name,
-        email: u.email,
-      }));
       const {
         privateKeyArmored,
         publicKeyArmored,
         revocationCertificate,
-      } = await openpgp.generateKey({
-        type: "ecc", // Type of the key, defaults to ECC
-        userIds: userIds, // you can pass multiple user IDs
-        passphrase: this.passphrase, // protects the private key
+      } = await pgp.generateKeyPair(this.passphrase, {
+        name: this.username,
+        email: this.email,
       });
       this.privateKey = privateKeyArmored;
       this.publicKey = publicKeyArmored;
       this.revocationCertificate = revocationCertificate;
     },
     async encryptMessage() {
-      const publicKey = await openpgp.readKey({ armoredKey: this.publicKey });
-      const sessionKey = await openpgp.generateSessionKey({
-        publicKeys: publicKey,
-      });
-
-      this.sessionKey = btoa(String.fromCodePoint(...sessionKey.data));
-
-      const enc = await openpgp.encrypt({
-        message: openpgp.Message.fromText(this.message),
-        publicKeys: publicKey,
-        sessionKey: sessionKey,
-      });
-      this.encryptedMessage = enc;
+      const { encryptedMessage, sessionKey } = await pgp.encrypt(
+        this.message,
+        this.publicKey
+      );
+      this.encryptedMessage = encryptedMessage;
+      this.sessionKey = sessionKey;
     },
     async decryptMessage() {
-      const message = await openpgp.readMessage({
-        armoredMessage: this.encryptedMessage, // parse armored message
-      });
-      const privateKey = await openpgp.readKey({ armoredKey: this.privateKey });
-      await privateKey.decrypt(this.passphrase);
-      const sessionKey = await openpgp.decryptSessionKeys({
-        message,
-        privateKeys: privateKey,
-      });
-      const { data: decrypted } = await openpgp.decrypt({
-        message,
-        sessionKeys: sessionKey,
-      });
-      this.decryptedMessage = decrypted;
+      this.decryptedMessage = await pgp.decrypt(
+        this.encryptedMessage,
+        this.privateKey,
+        this.passphrase
+      );
     },
   },
 };

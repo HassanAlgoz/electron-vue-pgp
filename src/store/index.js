@@ -7,15 +7,15 @@ import preferences from "./modules/preferences";
 
 export default new Vuex.Store({
     modules: {
-        preferences,
+        preferences
 
     },
     plugins: [
         createPersistedState({
             paths: [
-                'preferences',
+                'preferences'
             ]
-        }),
+        })
     ],
     state: {
     },
@@ -27,5 +27,5 @@ export default new Vuex.Store({
     },
     mutations: {
 
-    },
+    }
 })

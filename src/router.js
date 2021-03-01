@@ -11,8 +11,8 @@ const router = new Router({
         {
             name: "PGP",
             path: '/',
-            component: PGP,
-        },
+            component: PGP
+        }
     ]
 })
 
